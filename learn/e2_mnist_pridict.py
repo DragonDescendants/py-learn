@@ -12,6 +12,15 @@ import numpy as np
 from learn.l1_activation_function import sigmoid
 from learn.l2_softmax import softmax
 
+'''
+另外，在这个例子中，我们把load_mnist函数的参数normalize设置成了True。
+将normalize设置成True后，函数内部会进行转换，
+将图像的各个像素值除以255，使得数据的值在0.0～1.0的范围内。
+像这样把数据限定到某个范围内的处理称为正规化（normalization）。
+此外，对神经网络的输入数据进行某种既定的转换称为预处理（pre-processing）。
+这里，作为对输入图像的一种预处理，我们进行了正规化
+'''
+
 
 def get_data():
     # (训练图像 ,训练标签)，(测试图像，测试标签)
@@ -52,12 +61,25 @@ x, t = get_data()
 network = init_network()
 
 accuracy_count = 0
-for i in range(len(x)):
-    y = predict(network, x[i])
-    p = np.argmax(y)  # 获取概率最高的元素的索引
-    if p == t[i]:
-        accuracy_count += 1
+# for i in range(len(x)):
+#     y = predict(network, x[i])
+#     p = np.argmax(y)  # 获取概率最高的元素的索引
+#     if p == t[i]:
+#         accuracy_count += 1
+#
+# accuracy = accuracy_count / len(x)
+# print("Accuracy:" + str(accuracy))
+# Accuracy:0.9352
+
+# 批处理
+batch_size = 100
+# range(start,stop[,step])根据范围生成列表
+for i in range(0, len(x), batch_size):
+    x_batch = x[i:i + batch_size]
+    y_batch = predict(network, x_batch)
+    # 指定了在100 × 10的数组中，沿着第1维方向（以第1维为轴）找到值最大的元素的索引（第0维对应第1个维度）
+    p = np.argmax(y_batch, axis=1)
+    accuracy_count += np.sum(p == t[i:i + batch_size])
 
 accuracy = accuracy_count / len(x)
 print("Accuracy:" + str(accuracy))
-# Accuracy:0.9352
