@@ -34,10 +34,10 @@ class Relu:
 
 
 # test
-x = np.array([[1.0, -0.5], [-2.0, 3.0]])
-print(x)
-mask = (x <= 0)
-print(mask)
+# x = np.array([[1.0, -0.5], [-2.0, 3.0]])
+# print(x)
+# mask = (x <= 0)
+# print(mask)
 
 
 class Sigmoid:
@@ -61,18 +61,26 @@ class Affine:
         self.W = W
         self.b = b
         self.x = None
+        self.original_x_shape = None
         self.d_W = None
         self.d_b = None
 
     def forward(self, x):
+        # 对应张量
+        self.original_x_shape = x.shape
+        x = x.reshape(x.shape[0], -1)
         self.x = x
-        out = np.dot(x, self.W) + self.b
+
+        out = np.dot(self.x, self.W) + self.b
+
         return out
 
     def backward(self, d_out):
         d_x = np.dot(d_out, self.W.T)
         self.d_W = np.dot(self.x.T, d_out)
         self.d_b = np.sum(d_out, axis=0)
+
+        d_x = d_x.reshape(*self.original_x_shape)  # 还原输入数据的形状（对应张量）
         return d_x
 
 
@@ -90,5 +98,11 @@ class SoftmaxWithLoss:
 
     def backward(self, d_out=1):
         batch_size = self.t.shape[0]  # 获取批的大小
-        d_x = (self.y - self.t) / batch_size  # 传递的是单个数据的误差,要除以批的大小
-        return d_x
+        if self.t.size == self.y.size:  # 监督数据是one-hot-vector的情况
+            dx = (self.y - self.t) / batch_size  # 传递的是单个数据的误差,要除以批的大小
+        else:
+            dx = self.y.copy()
+            dx[np.arange(batch_size), self.t] -= 1
+            dx = dx / batch_size
+
+        return dx
